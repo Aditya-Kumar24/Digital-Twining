@@ -13,15 +13,13 @@ This project showcases a real-time **Digital Twin** implementation of a 4WD mobi
 - Ultrasonic Sensor (obstacle detection)
 - Motor Driver Module (L298N)
 - Power Supply Module
-- IR Sensors (for line following, optional)
+
 
 ### 🖥️ Software Components
 - **Unity**: Simulated environment for the digital twin
 - **Arduino IDE**: Embedded programming
 - **ESP32-CAM**: Real-time video stream over Wi-Fi
-- **WebSocket/MQTT**: Communication protocol (for Unity ↔ ESP32)
-- **Cloud Logging**: Firebase / Google Sheets (optional)
-- **Telemetry Dashboard**: Visual display of data like speed, direction, battery, and obstacle distance
+
 
 ---
 
@@ -30,7 +28,4 @@ This project showcases a real-time **Digital Twin** implementation of a 4WD mobi
 - 🔄 **Real-Time Synchronization** between the physical and virtual car
 - 📷 **Live Streaming** from the ESP32-CAM to your local network or cloud
 - 🚧 **Obstacle Detection** using ultrasonic sensors
-- 📊 **Telemetry Data** sent to Unity dashboard & cloud database
-- 🧭 **Remote Navigation** through UI in Unity or mobile controller
-- 🌐 **Digital Twin Dashboard** for control, simulation, and data logging
 
