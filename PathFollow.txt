@@ -1,0 +1,73 @@
+System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class PathFollower : MonoBehaviour
+{
+    public List<Transform> waypoints;            // Add waypoints in the Inspector
+    public float waypointTolerance = 0.5f;       // How close is considered “arrived”
+    public float waitTimeAtWaypoint = 1f;        // Pause time at each waypoint
+
+    private CarController carController;
+    private int currentWaypointIndex = 0;
+    private bool isMoving = false;
+
+    void Start()
+    {
+        carController = GetComponent<CarController>();
+        if (carController != null && waypoints.Count > 0)
+        {
+            carController.useAutoDrive = false; // We handle movement here
+            StartCoroutine(FollowPath());
+        }
+    }
+
+    IEnumerator FollowPath()
+    {
+        isMoving = true;
+
+        while (currentWaypointIndex < waypoints.Count)
+        {
+            Transform target = waypoints[currentWaypointIndex];
+
+            while (Vector3.Distance(transform.position, target.position) > waypointTolerance)
+            {
+                Vector3 direction = (target.position - transform.position).normalized;
+                direction.z = 0;
+
+                // Obstacle detection
+                /*if (!Physics.Raycast(transform.position, direction, carController.obstacleCheckDistance, carController.obstacleLayer))
+                {
+                    MoveToward(direction);
+                }
+                else
+                {
+                    Debug.Log("Obstacle detected on path to waypoint!");
+                }*/
+
+                yield return new WaitForFixedUpdate();
+            }
+
+            Debug.Log("Reached waypoint " + currentWaypointIndex);
+            currentWaypointIndex++;
+            yield return new WaitForSeconds(waitTimeAtWaypoint);
+        }
+
+        Debug.Log("Path complete.");
+        isMoving = false;
+    }
+
+    void MoveToward(Vector3 direction)
+    {
+        Vector3 moveDir = direction.normalized;
+        Vector3 movement = moveDir * carController.moveSpeed * Time.fixedDeltaTime;
+
+        Rigidbody rb = GetComponent<Rigidbody>();
+        rb.MovePosition(rb.position + movement);
+
+        // Auto rotation (Z-axis if rotated 90° in X)
+        float angle = Mathf.Atan2(moveDir.y, moveDir.x) * Mathf.Rad2Deg;
+        Quaternion targetRotation = Quaternion.Euler(0f, 0f, angle -90f);
+        rb.MoveRotation(Quaternion.Slerp(rb.rotation, targetRotation, Time.fixedDeltaTime * 5f));
+    }
+}

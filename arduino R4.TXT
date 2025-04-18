@@ -1,0 +1,112 @@
+// === Arduino UNO R4 WiFi Motor Control with HTTP Server ===
+
+#include <WiFiS3.h>
+#include <WiFiServer.h>
+
+// Replace with your network credentials
+const char* ssid = "YOUR_SSID";
+const char* password = "YOUR_PASSWORD";
+
+WiFiServer server(80);
+
+// Motor pins - L298N
+const int IN1 = 5;
+const int IN2 = 6;
+const int ENA = 9;  // PWM
+const int IN3 = 10;
+const int IN4 = 11;
+const int ENB = 3;  // PWM
+
+int motorSpeed = 200;
+
+void setup() {
+  Serial.begin(115200);
+
+  // Motor pin setup
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+  pinMode(IN3, OUTPUT);
+  pinMode(IN4, OUTPUT);
+  pinMode(ENA, OUTPUT);
+  pinMode(ENB, OUTPUT);
+
+  // WiFi connection
+  WiFi.begin(ssid, password);
+  Serial.print("Connecting to WiFi...");
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("\nConnected to WiFi");
+  Serial.print("IP Address: ");
+  Serial.println(WiFi.localIP());
+
+  server.begin();
+  Serial.println("HTTP server started");
+}
+
+void loop() {
+  WiFiClient client = server.available();
+  if (client) {
+    String request = client.readStringUntil('\r');
+    Serial.print("Request: ");
+    Serial.println(request);
+
+    client.flush();
+    
+    if (request.indexOf("/forward") != -1) {
+      moveForward();
+    } else if (request.indexOf("/backward") != -1) {
+      moveBackward();
+    } else if (request.indexOf("/left") != -1) {
+      turnLeft();
+    } else if (request.indexOf("/right") != -1) {
+      turnRight();
+    } else if (request.indexOf("/stop") != -1) {
+      stopMotors();
+    }
+
+    // Send HTTP response
+    client.println("HTTP/1.1 200 OK");
+    client.println("Content-Type: text/html");
+    client.println();
+    client.println("<html><body><h1>Command Received</h1></body></html>");
+    delay(1);
+    client.stop();
+  }
+}
+
+void moveForward() {
+  digitalWrite(IN1, HIGH); digitalWrite(IN2, LOW);
+  digitalWrite(IN3, HIGH); digitalWrite(IN4, LOW);
+  analogWrite(ENA, motorSpeed); analogWrite(ENB, motorSpeed);
+  Serial.println("Moving Forward");
+}
+
+void moveBackward() {
+  digitalWrite(IN1, LOW); digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, LOW); digitalWrite(IN4, HIGH);
+  analogWrite(ENA, motorSpeed); analogWrite(ENB, motorSpeed);
+  Serial.println("Moving Backward");
+}
+
+void turnLeft() {
+  digitalWrite(IN1, LOW); digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, HIGH); digitalWrite(IN4, LOW);
+  analogWrite(ENA, motorSpeed); analogWrite(ENB, motorSpeed);
+  Serial.println("Turning Left");
+}
+
+void turnRight() {
+  digitalWrite(IN1, HIGH); digitalWrite(IN2, LOW);
+  digitalWrite(IN3, LOW); digitalWrite(IN4, HIGH);
+  analogWrite(ENA, motorSpeed); analogWrite(ENB, motorSpeed);
+  Serial.println("Turning Right");
+}
+
+void stopMotors() {
+  digitalWrite(IN1, LOW); digitalWrite(IN2, LOW);
+  digitalWrite(IN3, LOW); digitalWrite(IN4, LOW);
+  analogWrite(ENA, 0); analogWrite(ENB, 0);
+  Serial.println("Motors Stopped");
+}

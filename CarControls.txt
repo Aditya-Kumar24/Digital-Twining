@@ -1,0 +1,111 @@
+using UnityEngine;
+
+[RequireComponent(typeof(Rigidbody))]
+public class CarController : MonoBehaviour
+{
+    public float moveSpeed = 10f;        // Movement speed
+    public float turnSpeed = 50f;        // Turning rate while driving
+    public bool useAutoDrive = false;    // Toggle auto-driving
+
+    private Rigidbody rb;
+    private float currentSteerAngle = 0f;
+
+    void Start()
+    {
+        rb = GetComponent<Rigidbody>();
+
+        if (useAutoDrive)
+        {
+            StartCoroutine(AutoDriveSequence());
+        }
+    }
+
+    void FixedUpdate()
+    {
+        if (!useAutoDrive)
+        {
+            float moveInput = Input.GetAxis("Vertical");
+            float steerInput = Input.GetAxis("Horizontal");
+
+            MoveCar(moveInput, steerInput);
+        }
+    }
+
+    void MoveCar(float moveInput, float steerInput)
+    {
+        // Move forward/backward
+        Vector3 moveDirection = transform.up; // Use 'right' as forward after 90° X rotation
+        Vector3 movement = moveDirection * moveInput * moveSpeed * Time.fixedDeltaTime;
+        rb.MovePosition(rb.position + movement);
+
+        // Only turn when moving
+        if (Mathf.Abs(moveInput) > 0.1f)
+        {
+            float turn = steerInput * turnSpeed * Time.fixedDeltaTime * Mathf.Sign(moveInput);
+            Quaternion turnRotation = Quaternion.Euler(0f, 0f, turn);
+            rb.MoveRotation(rb.rotation * turnRotation);
+        }
+    }
+
+    // === Auto-drive sequence ===
+    IEnumerator AutoDriveSequence()
+    {
+      
+        yield return AutoTurnRight(1f);
+        yield return AutoMoveForward(2f);
+        yield return AutoTurnLeft(1f);
+        yield return AutoMoveBackward(1f);
+        yield return StopCar();
+    }
+
+    IEnumerator AutoMoveForward(float duration)
+    {
+        float timer = 0f;
+        while (timer < duration)
+        {
+            rb.MovePosition(rb.position + transform.right * moveSpeed * Time.deltaTime);
+            timer += Time.deltaTime;
+            yield return null;
+        }
+    }
+
+    IEnumerator AutoMoveBackward(float duration)
+    {
+        float timer = 0f;
+        while (timer < duration)
+        {
+            rb.MovePosition(rb.position - transform.right * moveSpeed * Time.deltaTime);
+            timer += Time.deltaTime;
+            yield return null;
+        }
+    }
+
+    IEnumerator AutoTurnLeft(float duration)
+    {
+        float timer = 0f;
+        while (timer < duration)
+        {
+            Quaternion turn = Quaternion.Euler(0f, -turnSpeed * Time.deltaTime, 0f);
+            rb.MoveRotation(rb.rotation * turn);
+            timer += Time.deltaTime;
+            yield return null;
+        }
+    }
+
+    IEnumerator AutoTurnRight(float duration)
+    {
+        float timer = 0f;
+        while (timer < duration)
+        {
+            Quaternion turn = Quaternion.Euler(0f, turnSpeed * Time.deltaTime, 0f);
+            rb.MoveRotation(rb.rotation * turn);
+            timer += Time.deltaTime;
+            yield return null;
+        }
+    }
+
+    IEnumerator StopCar()
+    {
+        yield return new WaitForSeconds(1f);
+    }
+}
